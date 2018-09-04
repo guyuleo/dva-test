@@ -19,6 +19,17 @@ function beforeUpload(file) {
   return isJPG && isLt2M;
 }
 
+function convertToBinary(dataURI) {
+  const byteString = window.atob(dataURI.split(',')[1])
+  const ab = new ArrayBuffer(byteString.length)
+  const ia = new Uint8Array(ab)
+  for (let i = 0; i < byteString.length; i++) {
+  ia[i] = byteString.charCodeAt(i)
+  }
+  const bb = new window.Blob([ab], { type: 'image/png' })
+  return bb
+}
+
 class UpLoad extends React.Component {
   constructor(props) {
     super(props)
@@ -55,8 +66,9 @@ class UpLoad extends React.Component {
     // }
     // console.log('requestBody--------->', JSON.stringify(requestBody), typeof file);
 
-    getBase64(info.file.originFileObj, imgUrl => {
-      console.log('imageUrl=======>', imgUrl);
+    getBase64(info.file.originFileObj, imgDateUrl => {
+      const imgUrl = convertToBinary(imgDateUrl)
+      console.log('imgDateUrl=======>', imgDateUrl, 'imgUrl------->', imgUrl);
       fetch('https://upload.otosaas.com/new', { body: imgUrl, method: 'post' })
       .then(response => response.json())
       .then(json => {
