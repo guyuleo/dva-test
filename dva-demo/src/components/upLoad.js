@@ -3,7 +3,7 @@ import { Upload, Icon, message } from 'antd';
 
 function getBase64(img, callback) {
   const reader = new FileReader();
-  if (callback) reader.addEventListener('load', () => callback(reader.result));
+  reader.addEventListener('load', () => callback(reader.result));
   reader.readAsDataURL(img);
 }
 
@@ -19,17 +19,6 @@ function beforeUpload(file) {
   return isJPG && isLt2M;
 }
 
-function convertToBinary(dataURI) {
-  const byteString = window.atob(dataURI.split(',')[1])
-  const ab = new ArrayBuffer(byteString.length)
-  const ia = new Uint8Array(ab)
-  for (let i = 0; i < byteString.length; i++) {
-  ia[i] = byteString.charCodeAt(i)
-  }
-  const bb = new window.Blob([ab], { type: 'image/png' })
-  return bb
-}
-
 class UpLoad extends React.Component {
   constructor(props) {
     super(props)
@@ -38,56 +27,41 @@ class UpLoad extends React.Component {
     }
   }
 
-  UNSAFE_componentWillMount(nextProps) {
-    console.log('in UpLoad UNSAFE_componentWillMount-------->', this.props, nextProps);
-  }
+  // UNSAFE_componentWillMount(nextProps) {
+  //   console.log('in UpLoad UNSAFE_componentWillMount-------->', this.props, nextProps);
+  // }
 
   handleChange = info => {
     console.log('handleChange info990099090---------->', info);
-    // const reader = new FileReader();
-    // let imgUrl
-    // reader.addEventListener('load', () => {
-    //   console.log('reader.result-------->', reader.result)
-    //   imgUrl = reader.result
-    // })
-    // console.log('reader.result---------->', reader, 'imgUrl---------->', imgUrl);
-    // const { file = {} } = info
+    if (info.file.status === 'uploading') {
+      this.setState({ loading: true });
+      return;
+    }
+
     // if (info.file.status === 'done') {
-    //   // Get this url from response in real world.
     //   getBase64(info.file.originFileObj, imageUrl => this.setState({
     //     imageUrl,
     //     loading: false,
     //   }));
     // }
 
-    // const requestBody = {
-    //   image: file,
-    //   https: `https://f1.otosaas.com/openPlatform/img/${ file.name }`,
-    // }
-    // console.log('requestBody--------->', JSON.stringify(requestBody), typeof file);
-
-    getBase64(info.file.originFileObj, imgDateUrl => {
-      const imgUrl = convertToBinary(imgDateUrl)
-      console.log('imgDateUrl=======>', imgDateUrl, 'imgUrl------->', imgUrl);
-      fetch('https://upload.otosaas.com/new', { body: imgUrl, method: 'post' })
-      .then(response => response.json())
-      .then(json => {
-        const { code, data } = json
-        if (code === 0) {
-          console.log('data--------->', data);
-        }
-      })
-    });
-
-
-    if (info.file.status === 'uploading') {
-      this.setState({ loading: true });
-      return;
-    }
   }
 
   customRequest = info => {
     console.log('customRequest info------------>', info);
+    const formData = new FormData()
+    formData.append('image', info.file)
+    formData.append('https', `https://f1.otosaas.com/openPlatform/img/${ info.file.name }`)
+    fetch('http://dpp.boluome.com/https/generate', { body: formData, method: 'post' })
+    .then(response => response.json())
+    .then(response => {
+      const { code, https } = response
+      if (code === 0) {
+        this.setState({ imageUrl: https, loading: false })
+        console.log('https--------->', https);
+      }
+    })
+    .catch(error => console.error('Error:', error))
   }
 
   render() {
@@ -98,7 +72,7 @@ class UpLoad extends React.Component {
       </div>
     );
     const imageUrl = this.state.imageUrl;
-    console.log('imageUrl--------->', imageUrl);
+
     return (
       <div className='UpLoadCom-container'>
         <Upload
@@ -109,11 +83,6 @@ class UpLoad extends React.Component {
           beforeUpload={ beforeUpload }
           onChange={ this.handleChange }
           customRequest={ this.customRequest }
-          headers={{
-            appcode: 'me',
-            userid: 'test_long',
-            token: '7d164723ebcda37739894a8a3787a961',
-          }}
         >
           { imageUrl ? <img src={ imageUrl } alt="avatar" /> : uploadButton }
         </Upload>
