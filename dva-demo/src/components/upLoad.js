@@ -3,7 +3,7 @@ import { Upload, Icon, message } from 'antd';
 
 function getBase64(img, callback) {
   const reader = new FileReader();
-  reader.addEventListener('load', () => callback(reader.result));
+  if (callback) reader.addEventListener('load', () => callback(reader.result));
   reader.readAsDataURL(img);
 }
 
@@ -27,66 +27,55 @@ class UpLoad extends React.Component {
     }
   }
 
-  // UNSAFE_componentWillMount(nextProps) {
-  //   console.log('in UpLoad UNSAFE_componentWillMount-------->', this.props, nextProps);
-  // }
+  UNSAFE_componentWillMount(nextProps) {
+    console.log('in UpLoad UNSAFE_componentWillMount-------->', this.props, nextProps);
+  }
 
   handleChange = info => {
     console.log('handleChange info990099090---------->', info);
-    if (info.file.status === 'uploading') {
-      this.setState({ loading: true });
-      return;
-    }
+    // const reader = new FileReader();
+    // let imgUrl
+    // reader.addEventListener('load', () => {
+    //   console.log('reader.result-------->', reader.result)
+    //   imgUrl = reader.result
+    // })
+    // console.log('reader.result---------->', reader, 'imgUrl---------->', imgUrl);
     // const { file = {} } = info
-    if (info.file.status === 'done') {
-      // Get this url from response in real world.
-      getBase64(info.file.originFileObj, imageUrl => this.setState({
-        imageUrl,
-        loading: false,
-      }));
-    }
-
-    // if (info.file.originFileObj) {
+    // if (info.file.status === 'done') {
+    //   // Get this url from response in real world.
     //   getBase64(info.file.originFileObj, imageUrl => this.setState({
     //     imageUrl,
     //     loading: false,
     //   }));
     // }
 
-    // const formData = new FormData()
-    // formData.append('file', file)
-    // formData.append('https', `https://f1.otosaas.com/openPlatform/img/${ file.name }`)
-    // console.log('requestBody--------->', file, `https://f1.otosaas.com/openPlatform/img/${ file.name }`);
-    //
-    // fetch('http://dpp.boluome.com/https/generate', { body: formData, method: 'post' })
-    // .then(response => response.json())
-    // .then(response => {
-    //   const { code, data } = response
-    //   if (code === 0) {
-    //     console.log('data--------->', data);
-    //   }
-    // })
-    // .catch(error => console.error('Error:', error))
+    // const requestBody = {
+    //   image: file,
+    //   https: `https://f1.otosaas.com/openPlatform/img/${ file.name }`,
+    // }
+    // console.log('requestBody--------->', JSON.stringify(requestBody), typeof file);
 
+    getBase64(info.file.originFileObj, imgUrl => {
+      console.log('imageUrl=======>', imgUrl);
+      fetch('https://upload.otosaas.com/new', { body: imgUrl, method: 'post' })
+      .then(response => response.json())
+      .then(json => {
+        const { code, data } = json
+        if (code === 0) {
+          console.log('data--------->', data);
+        }
+      })
+    });
+
+
+    if (info.file.status === 'uploading') {
+      this.setState({ loading: true });
+      return;
+    }
   }
 
   customRequest = info => {
     console.log('customRequest info------------>', info);
-    const { file = {} } = info
-    const formData = new FormData()
-    formData.append('file', file)
-    formData.append('https', `https://f1.otosaas.com/openPlatform/img/${ file.name }`)
-    console.log('requestBody--------->', file, `https://f1.otosaas.com/openPlatform/img/${ file.name }`);
-
-    fetch('http://dpp.boluome.com/https/generate', { body: formData, method: 'post' })
-    .then(response => response.json())
-    .then(response => {
-      const { code, data } = response
-      if (code === 0) {
-        console.log('data--------->', data);
-      }
-    })
-    .catch(error => console.error('Error:', error))
   }
 
   render() {
@@ -108,6 +97,11 @@ class UpLoad extends React.Component {
           beforeUpload={ beforeUpload }
           onChange={ this.handleChange }
           customRequest={ this.customRequest }
+          headers={{
+            appcode: 'me',
+            userid: 'test_long',
+            token: '7d164723ebcda37739894a8a3787a961',
+          }}
         >
           { imageUrl ? <img src={ imageUrl } alt="avatar" /> : uploadButton }
         </Upload>
