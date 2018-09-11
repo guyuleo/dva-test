@@ -10,7 +10,7 @@ class UpLoad extends React.Component {
   }
 
   handleChange = info => {
-    console.log('handleChange info990099090---------->', info)
+    console.log('handleChange info---------->', info)
     if (info.file.status === 'uploading') {
       this.setState({ loading: true })
       return
